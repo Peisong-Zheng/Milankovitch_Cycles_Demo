@@ -1,0 +1,6 @@
+{
+  "name": "astro-iceage",
+  "private": true,
+  "type": "module",
+  "description": "天文冰期轨道参数可视化（纯静态站点，package.json 仅用于 node 自检脚本）"
+}

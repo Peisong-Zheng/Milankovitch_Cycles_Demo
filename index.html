@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milankovitch Cycles</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <header id="site-header">
+    <h1>Milankovitch Cycles <span>Eccentricity · Obliquity · Precession</span></h1>
+  </header>
+
+  <main id="layout">
+    <section id="stage">
+      <div id="paneOrbit">
+        <canvas id="scene"></canvas>
+        <div id="hud" class="panel">
+          <div class="hud-time" id="hudTime">−1000.0 kyr</div>
+          <div class="hud-row"><span>Eccentricity (e)</span><b id="hudEcc">—</b></div>
+          <div class="hud-row"><span>Obliquity (ε)</span><b id="hudObl">—</b></div>
+          <div class="hud-row"><span>Climatic precession (e·sinϖ)</span><b id="hudPre">—</b></div>
+          <div class="hud-row"><span>NH summer solstice</span><b id="hudSummer">—</b></div>
+        </div>
+        <div id="legend" class="panel">
+          <div class="legend-row"><span class="legend-dot"></span>Perihelion (closest to Sun)</div>
+          <div class="legend-row"><span class="legend-dot legend-june"></span>NH June solstice (drifts with precession)</div>
+        </div>
+      </div>
+      <div id="paneEarth">
+        <canvas id="earth"></canvas>
+        <div id="earthHud" class="panel">
+          <div class="hud-row"><span>65°N June insolation</span><b id="hudInsol">—</b></div>
+          <div class="hud-row"><span>Δ vs today</span><b id="hudInsolDelta">—</b></div>
+        </div>
+        <button id="sunToggle" type="button">☀ Sunlight: locked</button>
+      </div>
+      <div id="loading" class="panel">Loading data…</div>
+    </section>
+
+    <section id="controls">
+      <button id="playBtn" title="Pause">⏸</button>
+      <input id="slider" type="range" min="-1000" max="60" step="0.1" value="-1000" />
+      <span id="timeLabel">−1000.0 kyr</span>
+    </section>
+
+    <section id="charts">
+      <canvas class="chart" id="chartEcc"></canvas>
+      <canvas class="chart" id="chartObl"></canvas>
+      <canvas class="chart" id="chartPre"></canvas>
+    </section>
+  </main>
+
+  <footer id="site-footer">
+    <div>
+      Orbital data: Laskar et al. (2004),
+      <a href="https://doi.org/10.1051/0004-6361:20041335">doi:10.1051/0004-6361:20041335</a>
+    </div>
+    <div>
+      Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
+      Implemented by Kimi K3 · Updated 2026-07-19
+    </div>
+    <div>Note: eccentricity exaggerated ×3 in the orbit view; Earth's orbital phase is schematic.</div>
+  </footer>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
