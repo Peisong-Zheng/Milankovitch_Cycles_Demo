@@ -96,6 +96,21 @@ async function boot() {
     setView(activeView === 'precession' ? 'summer' : 'precession'));
   setView(new URLSearchParams(location.search).get('view') === 'summer' ? 'summer' : 'precession');
 
+  // about sidebar: hamburger / close button / overlay / Esc
+  const sidebar = $('sidebar');
+  const overlay = $('overlay');
+  const menuBtn = $('menuBtn');
+  function setSidebar(open) {
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('open', open);
+    sidebar.setAttribute('aria-hidden', String(!open));
+    menuBtn.setAttribute('aria-expanded', String(open));
+  }
+  menuBtn.addEventListener('click', () => setSidebar(true));
+  $('sidebarClose').addEventListener('click', () => setSidebar(false));
+  overlay.addEventListener('click', () => setSidebar(false));
+  window.addEventListener('keydown', (e) => { if (e.key === 'Escape') setSidebar(false); });
+
   function syncPlayBtn() {
     playBtn.textContent = player.playing ? '⏸' : '▶';
     playBtn.title = player.playing ? 'Pause' : 'Play';

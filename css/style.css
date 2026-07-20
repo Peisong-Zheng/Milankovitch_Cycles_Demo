@@ -57,6 +57,124 @@ body {
   margin-left: 10px;
 }
 
+#menuBtn {
+  flex: none;
+  align-self: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+#menuBtn:hover {
+  color: var(--text);
+  border-color: rgba(251, 191, 36, 0.5);
+}
+
+/* ---------- about sidebar ---------- */
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 18, 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+  z-index: 9;
+}
+
+#overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+#sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(360px, 88vw);
+  padding: 22px 22px 28px;
+  overflow-y: auto;
+  background: rgba(10, 15, 30, 0.97);
+  border-right: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  transform: translateX(-105%);
+  visibility: hidden;
+  transition: transform 0.28s ease, visibility 0.28s;
+  z-index: 10;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-dim);
+}
+
+#sidebar.open {
+  transform: none;
+  visibility: visible;
+}
+
+#sidebar h2 {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+#sidebar h2:first-of-type {
+  margin-top: 28px;
+}
+
+#sidebar p {
+  margin: 0 0 10px;
+}
+
+#sidebar ul {
+  margin: 0 0 10px;
+  padding-left: 18px;
+}
+
+#sidebar li {
+  margin-bottom: 4px;
+}
+
+#sidebar b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+#sidebar a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+#sidebar a:hover {
+  text-decoration: underline;
+}
+
+#sidebarClose {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#sidebarClose:hover {
+  color: var(--text);
+}
+
 /* ---------- layout ---------- */
 
 #layout {
@@ -348,29 +466,6 @@ body {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(10, 15, 30, 0.55);
-}
-
-/* ---------- footer ---------- */
-
-#site-footer {
-  flex: none;
-  max-width: 1500px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 8px 20px 10px;
-  font-size: 11px;
-  line-height: 1.7;
-  color: var(--text-dim);
-  letter-spacing: 0.3px;
-}
-
-#site-footer a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-#site-footer a:hover {
-  text-decoration: underline;
 }
 
 @media (max-width: 900px) {

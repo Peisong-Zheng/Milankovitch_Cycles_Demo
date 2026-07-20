@@ -20,8 +20,47 @@
 </head>
 <body>
   <header id="site-header">
+    <button id="menuBtn" type="button" aria-label="Open about panel" aria-expanded="false">☰</button>
     <h1>Milankovitch Cycles <span>Eccentricity · Obliquity · Precession</span></h1>
   </header>
+
+  <div id="overlay"></div>
+  <aside id="sidebar" aria-hidden="true">
+    <button id="sidebarClose" type="button" aria-label="Close about panel">×</button>
+    <h2>About this visualization</h2>
+    <p>
+      Milankovitch cycles are the slow changes in Earth's orbit and axial tilt
+      that pace the ice ages by varying how much sunlight reaches high northern
+      latitudes in summer. This page animates all three cycles over the past
+      one million years (−1000 to +60 kyr):
+    </p>
+    <ul>
+      <li><b>Eccentricity (~100 kyr)</b> — the shape of Earth's orbit around the Sun;</li>
+      <li><b>Obliquity (~41 kyr)</b> — the tilt of Earth's axis, which controls the strength of the seasons;</li>
+      <li><b>Climatic precession (~21 kyr)</b> — the wobble that shifts where on the orbit the seasons fall.</li>
+    </ul>
+    <p>
+      The left panel shows the orbit viewed from above the north ecliptic pole.
+      The right panel switches between a <b>Precession</b> view (the whole planet
+      wobbling under fixed sunlight) and an <b>NH summer</b> view (the June
+      solstice Sun–Earth distance, with a scrolling 65°N June-insolation
+      strip — the classic ice-age trigger).
+    </p>
+    <h2>Data &amp; credits</h2>
+    <p>
+      Orbital data: Laskar et al. (2004),
+      <a href="https://doi.org/10.1051/0004-6361:20041335">doi:10.1051/0004-6361:20041335</a>
+      (La2004 orbital solution).
+    </p>
+    <p>
+      Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth
+      distance exaggerated in the summer view; Earth's orbital phase is schematic.
+    </p>
+    <p>
+      Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
+      Implemented by Kimi K3 · Updated 2026-07-19
+    </p>
+  </aside>
 
   <main id="layout">
     <section id="stage">
@@ -64,18 +103,6 @@
       <canvas class="chart" id="chartPre"></canvas>
     </section>
   </main>
-
-  <footer id="site-footer">
-    <div>
-      Orbital data: Laskar et al. (2004),
-      <a href="https://doi.org/10.1051/0004-6361:20041335">doi:10.1051/0004-6361:20041335</a>
-    </div>
-    <div>
-      Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
-      Implemented by Kimi K3 · Updated 2026-07-19
-    </div>
-    <div>Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth distance exaggerated in the summer view; Earth's orbital phase is schematic.</div>
-  </footer>
 
   <script type="module" src="js/main.js"></script>
 </body>

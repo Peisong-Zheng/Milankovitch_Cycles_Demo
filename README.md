@@ -29,6 +29,7 @@
 
 - 打开页面自动从 1 Ma 前（−1000 kyr）播放到"现在"（0 kyr）并循环；
   播放速度 5 kyr/s，一轮约 200 s。
+- 左上角 ☰ 打开侧边栏：关于本可视化的简介、数据来源与备注信息（原页脚内容）。
 - 双联视图（"一颗地球，两台相机"）：左右两屏共享 kyr 时钟与年相位；
   窄屏时右屏自动堆叠到下方。
 - 左屏轨道动画（从北极上空视角看）：
@@ -100,8 +101,8 @@ node tools/check_orbit_signs.mjs  # 轨道符号约定：公转CCW / 拱线顺�
 ## 结构
 
 ```
-index.html        页面骨架（import map 引入本地 three.js；左右分屏）
-css/style.css     深色星空主题 + 分屏布局
+index.html        页面骨架（import map 引入本地 three.js；左右分屏 + 关于侧边栏）
+css/style.css     深色星空主题 + 分屏布局 + 侧边栏
 js/data.js        数据加载 / 解析 + ϖ 重建（T_START/T_END/DT 在此定义）
 js/insolation.js  季节几何与日照量纯函数（δ、θ_sol、太阳仰角、65°N 夏至日照、岁差份额）
 js/scene.js       左屏 Three.js 轨道场景（ECC_GAIN、星空、尾迹重投影、夏至点标记）
