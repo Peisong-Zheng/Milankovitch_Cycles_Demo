@@ -81,6 +81,9 @@ export class OrbitScene {
     this.controls.dampingFactor = 0.08;
     this.controls.minDistance = 8;
     this.controls.maxDistance = 120;
+    // touch: let vertical drags scroll the stacked (scrollable) mobile page;
+    // horizontal drags still rotate (OrbitControls sets touch-action: none)
+    this.controls.domElement.style.touchAction = 'pan-y';
     this.controls.maxPolarAngle = 1.45;
 
     this._buildSun();

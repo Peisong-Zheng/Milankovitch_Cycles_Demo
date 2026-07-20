@@ -469,11 +469,16 @@ body {
 }
 
 @media (max-width: 900px) {
-  #stage { flex-direction: column; }
-  /* stacked: give the orbit pane more vertical room (3:2) */
-  #paneOrbit { flex: 3 1 0; }
+  /* stacked layout: the page scrolls vertically, so the orbit pane can be
+     genuinely tall instead of sharing one viewport with everything else */
+  html, body { height: auto; overflow: visible; }
+  body { min-height: 100vh; min-height: 100svh; }
+  #stage { flex: none; height: auto; min-height: 0; flex-direction: column; }
+  #paneOrbit { flex: none; height: 68vh; height: 68svh; }
   #paneEarth {
-    flex: 2 1 0;
+    flex: none;
+    height: 46vh;
+    height: 46svh;
     border-left: none;
     border-top: 1px solid var(--line);
   }
@@ -488,9 +493,9 @@ body {
   #site-header h1 span { display: none; }
   #menuBtn { width: 28px; height: 28px; font-size: 14px; margin-right: 8px; }
   #layout { padding: 6px 8px 0; gap: 6px; }
-  #hud { top: 10px; left: 10px; min-width: 0; padding: 8px 12px; }
+  #hud { top: 10px; left: 10px; min-width: 0; padding: 7px 10px; }
   .hud-time { font-size: 16px; }
-  .hud-row { font-size: 11px; }
+  .hud-row { font-size: 11px; line-height: 1.55; }
   #legend { left: 10px; bottom: 10px; font-size: 10.5px; padding: 6px 10px; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; }
   #viewToggle { top: 10px; right: 10px; font-size: 11px; padding: 5px 10px; }
