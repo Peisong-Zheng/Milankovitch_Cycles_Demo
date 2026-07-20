@@ -1,24 +1,20 @@
-// Right pane: cartoon Earth close-up — two sunlight modes.
+// Right pane (Precession view): cartoon Earth close-up.
 //
-// LOCKED mode (default): sunlight is FIXED from the left (a fixed orbital
-// position); the whole planet — globe, axis, rings — precesses under it with
-// the axial share of Δϖ (retrograde, same sign as scene.js), so the axis rocks
-// ±ε relative to the light over the precession cycle: the season at this fixed
-// orbital position flips between NH-summer-like and NH-winter-like (γ = 0 is
-// June-solstice-like for the NH).
-//
-// SEASONAL mode (toggle in the pane): precession is frozen (globe back at its
-// home orientation) and the sunlight elevation swings with the year,
-// β = δ − ε — the v3 geometry with â·ŝ = sinδ exactly
-// (locked by test/insolation.test.mjs). This isolates obliquity's seasonal
-// effect: terminator tilt, polar day/night over the year.
+// Sunlight is FIXED from the left (a fixed orbital position); the whole
+// planet — globe, axis, rings — precesses under it with the axial share of
+// Δϖ (retrograde, same sign as scene.js), so the axis rocks ±ε relative to
+// the light over the precession cycle: the season at this fixed orbital
+// position flips between NH-summer-like and NH-winter-like (γ = 0 is
+// June-solstice-like for the NH). This pane is dedicated to the visual
+// story of axial precession; the NH-summer distance / insolation story
+// lives in summerview.js.
 //
 // The globe mesh lives INSIDE the tilt group so the texture's poles stay on the
 // physical axis; texture lon 0 faces the camera at γ = 0 (t = −1000 kyr).
 
 import * as THREE from 'three';
 import { makeGlowTexture, makeStars } from './scene.js';
-import { AXIAL_SHARE, solsticeAnomaly, sunElevation } from './insolation.js';
+import { AXIAL_SHARE } from './insolation.js';
 
 const R = 2.2;              // globe radius (scene units)
 const RING_R = R * 1.006;   // rings float just above the surface
@@ -75,9 +71,8 @@ export class EarthView {
     this.camera.position.copy(CAM_POS);
     this.camera.lookAt(CAM_LOOK);
 
-    // Key light = Sun, from the left (fixed in LOCKED mode, seasonal elevation
-    // swing in SEASONAL mode); fill + ambient kept faint so the night side
-    // stays clearly dark against the day side
+    // Key light = Sun, from the left (fixed); fill + ambient kept faint so
+    // the night side stays clearly dark against the day side
     this.sunLight = new THREE.DirectionalLight(0xfff7e0, 1.35);
     this.sunLight.position.copy(SUN_DIR).multiplyScalar(10);
     this.scene.add(this.sunLight);
@@ -85,8 +80,6 @@ export class EarthView {
     fill.position.copy(CAM_POS);
     this.scene.add(fill);
     this.scene.add(new THREE.HemisphereLight(0x93c5fd, 0x0b1226, 0.06));
-
-    this.seasonal = false; // sunlight mode: LOCKED (precession) | SEASONAL
 
     this._buildEarth();
 
@@ -155,32 +148,13 @@ export class EarthView {
     this.camera.updateProjectionMatrix();
   }
 
-  // Switch the sunlight mode: false = LOCKED (fixed orbital position, watch
-  // precession rock the axis); true = SEASONAL (precession frozen, sunlight
-  // elevation swings with the year, â·ŝ = sinδ)
-  setSeasonal(flag) {
-    this.seasonal = flag;
-  }
-
-  update(index, anomaly) {
+  update(index) {
     const pi = this.data.pi[index];
     const obl = this.data.obl[index];
     const dw = pi - this.pi0;
 
-    if (this.seasonal) {
-      // seasons mode: no precession; sunlight elevation β = δ − ε swings
-      this.earthGroup.rotation.y = 0;
-      const beta = sunElevation(anomaly - solsticeAnomaly(pi), obl);
-      const cb = Math.cos(beta);
-      this.sunLight.position.set(
-        SUN_DIR.x * cb, Math.sin(beta), SUN_DIR.z * cb
-      ).multiplyScalar(10);
-    } else {
-      // locked mode: sunlight fixed; the whole planet precesses (retrograde,
-      // same sign as scene.js)
-      this.earthGroup.rotation.y = -AXIAL_SHARE * dw;
-      this.sunLight.position.copy(SUN_DIR).multiplyScalar(10);
-    }
+    // sunlight fixed; the whole planet precesses (retrograde, same sign as scene.js)
+    this.earthGroup.rotation.y = -AXIAL_SHARE * dw;
     this.tiltGroup.rotation.x = obl;
     this.renderer.render(this.scene, this.camera);
   }

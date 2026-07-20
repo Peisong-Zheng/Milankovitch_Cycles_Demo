@@ -111,4 +111,27 @@ function fail(msg) { throw new Error(msg); }
   console.log('跨屏同步: 夏至点惯性漂移 = 左屏地轴 = 右屏γ = −AXIAL_SHARE·Δϖ（6 个采样）');
 }
 
-console.log('OK: 轨道符号约定全部成立（公转CCW / 拱线顺行 / 赤道逆行 / 夏至位置 / 跨屏同步）');
+// 6. 夏季距离自检（summerview.js 同源公式）：r_sol = a(1−e²)/(1+e·cosθ_sol)
+//    现代（t=0）夏至在远日点附近 → r_sol ≈ 1.016a；全序列范围 ⊂ [1−e_max, 1+e_max]
+{
+  let rMin = Infinity, rMax = -Infinity, eMax = 0;
+  for (let i = 0; i < data.n; i++) {
+    const e = data.ecc[i];
+    const r = (1 - e * e) / (1 + e * Math.cos(solsticeAnomaly(data.pi[i])));
+    if (r < rMin) rMin = r;
+    if (r > rMax) rMax = r;
+    if (e > eMax) eMax = e;
+  }
+  const i0 = data.indexAt(0);
+  const e0 = data.ecc[i0];
+  const r0 = (1 - e0 * e0) / (1 + e0 * Math.cos(solsticeAnomaly(data.pi[i0])));
+  console.log('夏季距离: r_sol(0) =', r0.toFixed(4) + 'a，范围', rMin.toFixed(4) + ' ~', rMax.toFixed(4));
+  if (Math.abs(r0 - 1.0163) > 0.002) {
+    fail(`现代夏至日地距离应 ≈1.016a（远日点附近），实测 ${r0.toFixed(4)}`);
+  }
+  if (rMin < 1 - eMax - 1e-9 || rMax > 1 + eMax + 1e-9) {
+    fail(`r_sol 超出 [1−e_max, 1+e_max] 物理范围: ${rMin} ~ ${rMax}, eMax=${eMax}`);
+  }
+}
+
+console.log('OK: 轨道符号约定全部成立（公转CCW / 拱线顺行 / 赤道逆行 / 夏至位置 / 跨屏同步 / 夏季距离）');

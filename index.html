@@ -33,11 +33,13 @@
       </div>
       <div id="paneEarth">
         <canvas id="earth"></canvas>
-        <div id="earthHud" class="panel">
-          <div class="hud-row"><span>65°N June insolation</span><b id="hudInsol">—</b></div>
-          <div class="hud-row"><span>Δ vs today</span><b id="hudInsolDelta">—</b></div>
+        <div id="summerWrap" style="display:none">
+          <div id="summerSceneBox">
+            <canvas id="summer"></canvas>
+          </div>
+          <canvas id="summerChart"></canvas>
         </div>
-        <button id="sunToggle" type="button">☀ Sunlight: locked</button>
+        <button id="viewToggle" type="button">View: Precession</button>
       </div>
       <div id="loading" class="panel">Loading data…</div>
     </section>
@@ -64,7 +66,7 @@
       Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
       Implemented by Kimi K3 · Updated 2026-07-19
     </div>
-    <div>Note: eccentricity exaggerated ×3 in the orbit view; Earth's orbital phase is schematic.</div>
+    <div>Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth distance exaggerated in the summer view; Earth's orbital phase is schematic.</div>
   </footer>
 
   <script type="module" src="js/main.js"></script>

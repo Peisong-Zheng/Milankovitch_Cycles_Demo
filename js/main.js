@@ -1,11 +1,12 @@
-// Entry point: load data, assemble orbit scene / earth close-up / charts / player,
+// Entry point: load data, assemble orbit scene / right-pane views / charts / player,
 // own the shared year-phase clock, start the render loop
 import { loadOrbitalData } from './data.js';
 import { OrbitScene } from './scene.js';
 import { EarthView } from './earthview.js';
+import { SummerView } from './summerview.js';
 import { TimeChart } from './charts.js';
 import { Player } from './player.js';
-import { solsticeAnomaly, insolationJune65 } from './insolation.js';
+import { solsticeAnomaly } from './insolation.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +22,8 @@ async function boot() {
   $('loading').style.display = 'none';
 
   const scene = new OrbitScene($('scene'), data);
-  const earth = new EarthView($('earth'), data);
+  const earth = new EarthView($('earth'), data);   // precession view
+  const summer = new SummerView($('summer'), $('summerChart'), data);
 
   const charts = [
     new TimeChart($('chartEcc'), {
@@ -54,11 +56,8 @@ async function boot() {
     time: $('hudTime'), ecc: $('hudEcc'), obl: $('hudObl'), pre: $('hudPre'),
     summer: $('hudSummer'),
   };
-  const hudE = {
-    insol: $('hudInsol'), insolDelta: $('hudInsolDelta'),
-  };
 
-  // shared year phase (true anomaly) for both panes
+  // year phase (true anomaly) driving the orbit scene's decorative revolution
   let anomaly = Math.PI * 0.7;
 
   // Dragging the slider stops autoplay and jumps to that moment
@@ -76,27 +75,31 @@ async function boot() {
     syncPlayBtn();
   });
 
-  // right pane sunlight mode: LOCKED (fixed orbital position, precession view)
-  // vs SEASONAL (sunlight swings with the year, obliquity view)
-  const sunToggle = $('sunToggle');
-  function setSunMode(seasonal) {
-    earth.setSeasonal(seasonal);
-    sunToggle.textContent = seasonal ? '☀ Sunlight: seasonal' : '☀ Sunlight: locked';
-    sunToggle.title = seasonal
-      ? 'Sunlight swings with the seasons (obliquity view) — click to lock it and watch precession'
-      : 'Sunlight locked at a fixed orbital position (precession view) — click to follow the seasons';
+  // right pane view switch: PRECESSION (axial precession under locked
+  // sunlight) vs NH SUMMER (side view: solstice Sun–Earth distance + the
+  // scrolling 65°N insolation strip)
+  const viewToggle = $('viewToggle');
+  let activeView = 'precession';
+  function setView(name) {
+    activeView = name;
+    $('earth').style.display = name === 'precession' ? '' : 'none';
+    $('summerWrap').style.display = name === 'summer' ? '' : 'none';
+    viewToggle.textContent = name === 'precession' ? 'View: Precession' : 'View: NH summer';
+    viewToggle.title = name === 'precession'
+      ? 'Axial precession under locked sunlight — click for the NH summer distance view'
+      : 'NH-summer Sun–Earth distance and 65°N insolation — click for the precession view';
+    // canvases were 0-sized while hidden; force a resize on the incoming view
+    if (name === 'precession') earth._resize();
+    else summer._resize();
   }
-  sunToggle.addEventListener('click', () => setSunMode(!earth.seasonal));
-  setSunMode(new URLSearchParams(location.search).get('sun') === 'seasonal');
+  viewToggle.addEventListener('click', () =>
+    setView(activeView === 'precession' ? 'summer' : 'precession'));
+  setView(new URLSearchParams(location.search).get('view') === 'summer' ? 'summer' : 'precession');
 
   function syncPlayBtn() {
     playBtn.textContent = player.playing ? '⏸' : '▶';
     playBtn.title = player.playing ? 'Pause' : 'Play';
   }
-
-  // baseline for the insolation delta: value at t = 0 (today)
-  const idx0 = data.indexAt(0);
-  const q0 = insolationJune65(data.ecc[idx0], data.obl[idx0], solsticeAnomaly(data.pi[idx0]));
 
   let last = performance.now();
   let lastIdx = -1;
@@ -111,7 +114,8 @@ async function boot() {
     const idx = data.indexAt(player.t);
 
     scene.update(idx, anomaly, dt, player.playing);
-    earth.update(idx, anomaly);
+    if (activeView === 'precession') earth.update(idx);
+    else summer.update(idx);
 
     // charts redraw only when the index changed or a resize cleared the canvas
     for (const c of charts) {
@@ -131,14 +135,10 @@ async function boot() {
       hud.pre.textContent = (data.pre[idx] >= 0 ? '+' : '') + data.pre[idx].toFixed(5);
 
       // where NH summer solstice falls on the orbit (true anomaly relative
-      // to perihelion) + June insolation at 65°N
+      // to perihelion)
       const thSol = solsticeAnomaly(data.pi[idx]);
       const solDeg = ((thSol * 180 / Math.PI) % 360 + 360) % 360;
       hud.summer.textContent = solDeg.toFixed(0) + '° past perihelion';
-
-      const q = insolationJune65(data.ecc[idx], data.obl[idx], thSol);
-      hudE.insol.textContent = q.toFixed(0) + ' W/m²';
-      hudE.insolDelta.textContent = (q - q0 >= 0 ? '+' : '') + (q - q0).toFixed(0) + ' W/m²';
 
       lastIdx = idx;
     }
@@ -150,7 +150,7 @@ async function boot() {
   requestAnimationFrame(frame);
 
   // debug / test handle
-  window.__app = { player, scene, earth, data };
+  window.__app = { player, scene, earth, summer, data };
 }
 
 boot().catch((err) => {
