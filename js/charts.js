@@ -43,6 +43,8 @@ export class TimeChart {
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this._w = w;
     this._h = h;
+    // UI scale: shrink fonts/lines on narrow (e.g. phone) canvases
+    this._ui = Math.max(0.72, Math.min(1, w / 900));
     this.dirty = true; // canvas content was cleared by the resize
   }
 
@@ -74,6 +76,8 @@ export class TimeChart {
     }
 
     const w = this._w, h = this._h;
+    const ui = this._ui || 1;
+    const px = (n) => `${Math.round(n * ui * 10) / 10}px -apple-system, "Segoe UI", sans-serif`;
     ctx.clearRect(0, 0, w, h);
 
     // future region (0 ~ +60 kyr) shading
@@ -85,7 +89,7 @@ export class TimeChart {
     ctx.strokeStyle = C.grid;
     ctx.fillStyle = C.tickText;
     ctx.lineWidth = 1;
-    ctx.font = '10px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = px(10);
     ctx.textAlign = 'center';
     for (const t of X_TICKS) {
       const x = this._x(t);
@@ -143,10 +147,10 @@ export class TimeChart {
     }
     ctx.strokeStyle = opts.color;
     ctx.globalAlpha = 0.2;
-    ctx.lineWidth = 5;
+    ctx.lineWidth = 5 * ui;
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 1.6 * ui;
     ctx.stroke();
 
     // playhead and current point
@@ -162,22 +166,22 @@ export class TimeChart {
     ctx.fillStyle = opts.color;
     ctx.globalAlpha = 0.25;
     ctx.beginPath();
-    ctx.arc(headX, headY, 7, 0, Math.PI * 2);
+    ctx.arc(headX, headY, 7 * ui, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1;
     ctx.beginPath();
-    ctx.arc(headX, headY, 3, 0, Math.PI * 2);
+    ctx.arc(headX, headY, 3 * ui, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
 
     // title and current value
     ctx.textAlign = 'left';
-    ctx.font = '12px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = px(12);
     ctx.fillStyle = C.title;
     ctx.fillText(opts.title, PAD.left, 15);
     ctx.textAlign = 'right';
     ctx.fillStyle = opts.color;
-    ctx.font = 'bold 13px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = 'bold ' + px(13);
     ctx.fillText(opts.fmt(values[index]), w - PAD.right, 15);
   }
 }

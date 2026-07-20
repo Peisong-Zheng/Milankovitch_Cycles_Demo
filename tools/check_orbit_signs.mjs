@@ -28,6 +28,7 @@ const data = buildOrbitalData(
   readFileSync(join(root, 'orb_data/ecc_1000_60_inter100.txt'), 'utf8'),
   readFileSync(join(root, 'orb_data/obl_1000_60_inter100.txt'), 'utf8'),
   readFileSync(join(root, 'orb_data/pre_1000_60_inter100.txt'), 'utf8'),
+  readFileSync(join(root, 'orb_data/insolation_65N_solstice_1000_60_inter100.txt'), 'utf8'),
 );
 
 const DEG = 180 / Math.PI;

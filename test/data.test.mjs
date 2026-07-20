@@ -5,13 +5,17 @@ import { buildOrbitalData, DT } from '../js/data.js';
 const ecc = readFileSync('orb_data/ecc_1000_60_inter100.txt', 'utf8');
 const obl = readFileSync('orb_data/obl_1000_60_inter100.txt', 'utf8');
 const pre = readFileSync('orb_data/pre_1000_60_inter100.txt', 'utf8');
+const insol = readFileSync('orb_data/insolation_65N_solstice_1000_60_inter100.txt', 'utf8');
 
-const d = buildOrbitalData(ecc, obl, pre);
+const d = buildOrbitalData(ecc, obl, pre, insol);
 
 const minmax = (a) => [Math.min(...a), Math.max(...a)];
 console.log('行数 n =', d.n, '| 时间范围:', d.times[0], '->', d.times[d.n - 1]);
 console.log('ecc 范围:', minmax(d.ecc).map((x) => x.toFixed(6)).join(' ~ '));
 console.log('obl 范围:', minmax(d.oblDeg).map((x) => x.toFixed(3)).join(' ~ '), 'deg');
+const [qLo, qHi] = minmax(d.insol65);
+console.log('insol65 范围:', qLo.toFixed(1), '~', qHi.toFixed(1), 'W/m²');
+if (qLo < 380 || qHi > 580) throw new Error('insol65 超出 65°N 夏至日照合理范围');
 
 // ϖ 重建质量：每步增量应小而平滑（预期 ~0.03 rad/step）
 const dw = [];

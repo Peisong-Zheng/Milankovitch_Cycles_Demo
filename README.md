@@ -2,7 +2,7 @@
 
 一个米兰科维奇周期的 3D 可视化演示，面向刚接触天文周期的学生：
 深色星空主题的双联 Three.js 场景——左侧为地球轨道全景，右侧可在
-"岁差视图"（卡通地球整星随岁差摆动）与"夏季距离视图"（夏至日地距离
+"岁差视图"（地球整星随岁差摆动）与"夏季距离视图"（夏至日地距离
 + 65°N 日照滚动时序）之间切换，展示
 **偏心率（eccentricity）、地轴倾角（obliquity）、气候岁差（climatic precession）**
 三个周期如何改变地球接收阳光的方式，下方配三条随播放同步揭示的时间序列曲线。
@@ -44,20 +44,20 @@
     0° = 夏至逢近日点，180° = 逢远日点；与轨道几何严格一致）；
   - 地轴加长显示以便观察；地球尾迹存历史真近点角、每帧重投影到当前椭圆。
 - 右屏通过右下角按钮在两个视图间切换：
-  - Precession（岁差视图，默认）：卡通地球特写（离线生成的平面卡通纹理，
-    海陆分色 + 海岸线 + 高纬冰盖），阳光固定从左前方射入——代表一个固定的
+  - Precession（岁差视图，默认）：地球特写（NASA Blue Marble 真实纹理），
+    阳光固定从左前方射入——代表一个固定的
     轨道位置；整颗地球（贴图、地轴、纬度圈为一体）在阳光下做逆行岁差摆动，
     地轴相对阳光在 ±ε 间摇摆，该位置的季节在北半球夏与冬之间缓慢翻转
     （起始时刻恰为"北半球夏至"光照），极昼极夜交替可见；
     地轴倾角 ε 随 kyr 呼吸（obliquity）；相机正对 0° 经线；球面只保留赤道环；
-  - NH summer（夏季距离视图）：公转轨道侧面视角——卡通太阳在左、卡通地球
+  - NH summer（夏季距离视图）：公转轨道侧面视角——卡通太阳在左、地球
     在右，地球固定在北半球夏至位形（北半球在上、地轴顶端倾向太阳，
     倾角 = 当年 ε）；随时间推移地球左右滑动，展示夏至日地距离
     r = a(1−e²)/(1+e·cosθ_sol) 因气候岁差（~21 kyr 主振荡）与偏心率
     （~100 kyr 振幅包络）产生的变化——相对全时段均值的偏差经大幅夸张
     （实际仅百分之几量级）；
     视图底部有一条 ±100 kyr 滚动时序窄条，随播放滚动 65°N 夏至日均日照量
-    全序列（W/m²，由 e、ε、ϖ 纯公式计算），并显示当前值及与今日的差值 Δ；
+    全序列（W/m²，insolation 包计算的数据文件），并显示当前值及与今日的差值 Δ；
 - 暂停时画面完全冻结（公转 / 尾迹 / 太阳脉动停止），仅保留相机交互。
 - 三条时间序列（标题附主周期：Eccentricity ~100 kyr / Obliquity ~41 kyr /
   Climatic precession ~21 kyr）随播放同步揭示，
@@ -68,21 +68,28 @@
 
 ## 数据
 
-数据来源：Laskar, J., et al. (2004), *A&A* 428, 261–285,
+轨道解来源：Laskar, J., et al. (2004), *A&A* 428, 261–285,
 "A long-term numerical solution for the insolation quantities of the Earth",
 [doi:10.1051/0004-6361:20041335](https://doi.org/10.1051/0004-6361:20041335)（La2004 轨道解）。
 
-`orb_data/` 下三个两列文本（时间 kyr，数值），范围 −1000 ~ +60 kyr，
-步长 0.1 kyr，各 10601 行：
+`orb_data/` 下四个两列文本（时间 kyr，数值），范围 −1000 ~ +60 kyr，
+步长 0.1 kyr，各 10601 行，均由
+[insolation](https://github.com/PaleoIPSL/Insolation) Python 包计算生成
+（La2004 轨道参数与 65°N 夏至日日照）：
 
 | 文件 | 内容 | 数值范围 |
 | --- | --- | --- |
 | `ecc_1000_60_inter100.txt` | 偏心率 e | 0.0024 ~ 0.0578 |
 | `obl_1000_60_inter100.txt` | 地轴倾角（rad） | 22.08° ~ 24.46° |
 | `pre_1000_60_inter100.txt` | 岁差指数 e·sinϖ | — |
+| `insolation_65N_solstice_1000_60_inter100.txt` | 65°N 夏至日均日照（W/m²） | 431.7 ~ 560.4 |
 
 前端加载时由 s = e·sinϖ / e = sinϖ 按连续性展开重建近日点经度 ϖ(t)
 （正反向各展开一次，取更平滑者；主周期约 21 kyr），用于轨道方位与岁差分解。
+
+地球纹理：NASA Blue Marble（three.js r160 examples 附带的
+earth_atmos_2048.jpg，2048×1024），已本地 vendor。
+（lib/textures/ 下仍保留 Natural Earth 卡通纹理与 coastlines.json 备用。）
 
 注意：地球在轨道上的相位与公转速度为视觉示意；轨道视图的偏心率夸张 ×3、
 夏季距离视图的日地距离偏差亦经大幅夸张以便观察，HUD 与图表始终显示真实数值。
@@ -106,16 +113,19 @@ css/style.css     深色星空主题 + 分屏布局 + 侧边栏
 js/data.js        数据加载 / 解析 + ϖ 重建（T_START/T_END/DT 在此定义）
 js/insolation.js  季节几何与日照量纯函数（δ、θ_sol、太阳仰角、65°N 夏至日照、岁差份额）
 js/scene.js       左屏 Three.js 轨道场景（ECC_GAIN、星空、尾迹重投影、夏至点标记）
-js/earthview.js   右屏岁差视图（卡通纹理、固定阳光、整星岁差摆动、0°经线取景）
+js/earthview.js   右屏岁差视图（NASA Blue Marble 纹理、固定阳光、整星岁差摆动、0°经线取景）
 js/summerview.js  右屏夏季距离视图（侧视日地、夏至距离夸张滑移、65°N 日照滚动时序）
+js/coastlines.js  矢量海岸线叠加（备用；当前真实纹理方案下未加载）
 js/charts.js      Canvas 时间序列图（深色仪表盘配色）
 js/player.js      播放引擎（SPEED_KYR_PER_SEC 调整速度）
 js/main.js        入口：组装各视图 / 图表 / 播放器，持有年相位时钟
 lib/              three.js r160 + OrbitControls（本地 vendor，离线可用）
-lib/textures/     卡通地球纹理（由 tools/make_earth_texture.py 离线生成）
-tools/            make_earth_texture.py：用 three.js 高光 mask 重绘平面卡通纹理；
+lib/textures/     earth_atmos_2048.jpg（NASA Blue Marble，three.js r160 vendor）；
+                  earth_cartoon_4096.png / coastlines.json 备用（tools/ 离线生成）
+tools/            make_earth_texture.py：Natural Earth 10m land 栅格化为卡通纹理；
+                  make_coastlines.py：10m coastline 量化压缩为 coastlines.json；
                   check_orbit_signs.mjs：轨道符号约定自检
-orb_data/         轨道数据（ecc / obl / pre 三个文本）
+orb_data/         轨道与日照数据（ecc / obl / pre / insolation 四个文本）
 start.command     macOS 双击启动（杀旧服务 → 起新服务 → 开浏览器）
 serve.sh          命令行启动
 serve.py          静态服务器（Cache-Control: no-store，防止浏览器沿用旧文件）

@@ -1,4 +1,4 @@
-// 轨道数据加载与解析：偏心率 e、地轴倾角 obl、岁差指数 pre = e·sinϖ
+// 轨道数据加载与解析：偏心率 e、地轴倾角 obl、岁差指数 pre = e·sinϖ、65°N 夏至日照
 // 数据源：orb_data/*.txt，两列（时间 kyr, 数值），范围 -1000 ~ +60 kyr，步长 0.1 kyr
 
 export const T_START = -1000; // kyr
@@ -62,14 +62,15 @@ function smoothness(pi) {
   return acc;
 }
 
-// 由三个文件文本构造完整数据集
-export function buildOrbitalData(eccText, oblText, preText) {
+// 由四个文件文本构造完整数据集
+export function buildOrbitalData(eccText, oblText, preText, insolText) {
   const ecc = parseColumn(eccText);
   const obl = parseColumn(oblText);
   const pre = parseColumn(preText);
+  const insol = parseColumn(insolText);
   const n = ecc.t.length;
-  if (obl.t.length !== n || pre.t.length !== n) {
-    throw new Error('三个数据文件的行数不一致');
+  if (obl.t.length !== n || pre.t.length !== n || insol.t.length !== n) {
+    throw new Error('数据文件的行数不一致');
   }
 
   const times = ecc.t;
@@ -93,6 +94,7 @@ export function buildOrbitalData(eccText, oblText, preText) {
     oblDeg,         // 地轴倾角 (°)
     pre: pre.v,     // 岁差指数 e·sinϖ
     pi,             // 近日点经度 ϖ (rad, 未取模)
+    insol65: insol.v, // 65°N 夏至日均日照 (W/m²)
     // 时间 -> 最近数据行索引（截断到合法范围）
     indexAt(timeKyr) {
       return clamp(Math.round((timeKyr - times[0]) / DT), 0, n - 1);
@@ -102,10 +104,11 @@ export function buildOrbitalData(eccText, oblText, preText) {
 
 // 浏览器端加载（需要通过 HTTP 服务访问，file:// 下 fetch 会被拦截）
 export async function loadOrbitalData(base = 'orb_data') {
-  const [eccText, oblText, preText] = await Promise.all([
+  const [eccText, oblText, preText, insolText] = await Promise.all([
     fetch(`${base}/ecc_1000_60_inter100.txt`).then((r) => r.text()),
     fetch(`${base}/obl_1000_60_inter100.txt`).then((r) => r.text()),
     fetch(`${base}/pre_1000_60_inter100.txt`).then((r) => r.text()),
+    fetch(`${base}/insolation_65N_solstice_1000_60_inter100.txt`).then((r) => r.text()),
   ]);
-  return buildOrbitalData(eccText, oblText, preText);
+  return buildOrbitalData(eccText, oblText, preText, insolText);
 }

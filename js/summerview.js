@@ -13,7 +13,7 @@
 
 import * as THREE from 'three';
 import { makeGlowTexture, makeStars } from './scene.js';
-import { solsticeAnomaly, insolationJune65 } from './insolation.js';
+import { solsticeAnomaly } from './insolation.js';
 import { T_START, T_END, DT } from './data.js';
 
 const SUN_X = -3.6;
@@ -54,14 +54,15 @@ export class SummerView {
     this.camera.position.set(0, CAM_Y, CAM_Z);
     this.camera.lookAt(0, 0, 0);
 
-    // key light travels from the Sun (left) toward the Earth (right)
-    const key = new THREE.DirectionalLight(0xfff7e0, 1.35);
+    // key light travels from the Sun (left) toward the Earth (right) — strong
+    // for a bright day side; fill + ambient faint so the night side stays dark
+    const key = new THREE.DirectionalLight(0xfff7e0, 2.8);
     key.position.set(SUN_X * 3, 0.5, 4);
     this.scene.add(key);
-    const fill = new THREE.DirectionalLight(0xdbeafe, 0.08);
+    const fill = new THREE.DirectionalLight(0xdbeafe, 0.12);
     fill.position.set(0, CAM_Y, CAM_Z);
     this.scene.add(fill);
-    this.scene.add(new THREE.HemisphereLight(0x93c5fd, 0x0b1226, 0.06));
+    this.scene.add(new THREE.HemisphereLight(0x93c5fd, 0x0b1226, 0.1));
 
     this._buildSun();
     this._buildEarth();
@@ -75,19 +76,19 @@ export class SummerView {
     this._resize();
   }
 
-  // Q65 June-insolation series and solstice Sun-distance series (units of a),
-  // both over the whole data span; gain calibrated so the largest deviation
-  // from the mean distance maps to SLIDE_MAX scene units
+  // Q65 June-insolation series (from data file, insolation package / La2004)
+  // and solstice Sun-distance series (units of a), both over the whole data
+  // span; gain calibrated so the largest deviation from the mean distance
+  // maps to SLIDE_MAX scene units
   _precompute() {
     const d = this.data;
     const n = d.n;
-    this.qSeries = new Float64Array(n);
+    this.qSeries = d.insol65;
     this.rSeries = new Float64Array(n);
     let qLo = Infinity, qHi = -Infinity, rSum = 0;
     for (let i = 0; i < n; i++) {
       const thSol = solsticeAnomaly(d.pi[i]);
       const e = d.ecc[i];
-      this.qSeries[i] = insolationJune65(e, d.obl[i], thSol);
       this.rSeries[i] = (1 - e * e) / (1 + e * Math.cos(thSol));
       if (this.qSeries[i] < qLo) qLo = this.qSeries[i];
       if (this.qSeries[i] > qHi) qHi = this.qSeries[i];
@@ -134,17 +135,17 @@ export class SummerView {
     this.tiltGroup = new THREE.Group();
     this.mover.add(this.tiltGroup);
 
-    // same cartoon texture as the precession view
+    // same NASA Blue Marble texture as the precession view
     this.globeMat = new THREE.MeshLambertMaterial({ color: 0x3b82f6 });
-    new THREE.TextureLoader().load('lib/textures/earth_cartoon_2048.png', (t) => {
+    new THREE.TextureLoader().load('lib/textures/earth_atmos_2048.jpg', (t) => {
       t.colorSpace = THREE.SRGBColorSpace;
       this.globeMat.map = t;
       this.globeMat.color.set(0xffffff);
       this.globeMat.needsUpdate = true;
     });
-    const globe = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R, 64, 48), this.globeMat);
-    globe.rotation.y = -Math.PI / 2; // texture lon 0 faces the camera (+z)
-    this.tiltGroup.add(globe);
+    this.globe = new THREE.Mesh(new THREE.SphereGeometry(EARTH_R, 64, 48), this.globeMat);
+    this.globe.rotation.y = -Math.PI / 2; // texture lon 0 faces the camera (+z)
+    this.tiltGroup.add(this.globe);
 
     const axisGeo = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, -EARTH_R * 1.5, 0),
@@ -199,6 +200,8 @@ export class SummerView {
       this.sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       this._sw = cw;
       this._sh = ch;
+      // UI scale: shrink fonts/lines on narrow (e.g. phone) panes
+      this._sui = Math.max(0.72, Math.min(1, cw / 700));
       this._stripDirty = true;
     }
   }
@@ -222,6 +225,8 @@ export class SummerView {
     if (!this._sw) return;
     const ctx = this.sctx;
     const w = this._sw, h = this._sh;
+    const ui = this._sui || 1;
+    const px = (n) => `${Math.round(n * ui * 10) / 10}px -apple-system, "Segoe UI", sans-serif`;
     const t = T_START + index * DT;
 
     // clamped sliding window (constant 2·WIN_HALF width)
@@ -238,7 +243,7 @@ export class SummerView {
     ctx.strokeStyle = C.grid;
     ctx.fillStyle = C.tickText;
     ctx.lineWidth = 1;
-    ctx.font = '9px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = px(9);
     ctx.textAlign = 'center';
     for (let g = Math.ceil(lo / 50) * 50; g <= hi; g += 50) {
       const gx = x(g);
@@ -263,17 +268,17 @@ export class SummerView {
     ctx.clip();
     ctx.beginPath();
     for (let i = i0; i <= i1; i++) {
-      const px = x(T_START + i * DT);
+      const px_ = x(T_START + i * DT);
       const py = y(this.qSeries[i]);
-      if (i === i0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+      if (i === i0) ctx.moveTo(px_, py);
+      else ctx.lineTo(px_, py);
     }
     ctx.strokeStyle = C.line;
     ctx.globalAlpha = 0.2;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 4 * ui;
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5 * ui;
     ctx.stroke();
 
     // "now" cursor + dot
@@ -287,24 +292,24 @@ export class SummerView {
     ctx.stroke();
     ctx.fillStyle = C.line;
     ctx.beginPath();
-    ctx.arc(cx, cy, 2.6, 0, TWO_PI);
+    ctx.arc(cx, cy, 2.6 * ui, 0, TWO_PI);
     ctx.fill();
     ctx.restore();
 
     // title + current value + Δ vs today
     ctx.textAlign = 'left';
-    ctx.font = '10px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = px(10);
     ctx.fillStyle = C.title;
     ctx.fillText('65°N June insolation (W/m²)', STRIP_PAD.left, 11);
     const qNow = this.qSeries[index];
     const dq = qNow - this.q0;
     ctx.textAlign = 'right';
-    ctx.font = 'bold 11px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = 'bold ' + px(11);
     ctx.fillStyle = C.line;
     const valStr = qNow.toFixed(0);
     ctx.fillText(valStr, w - STRIP_PAD.right, 11);
     const valW = ctx.measureText(valStr).width;
-    ctx.font = '10px -apple-system, "Segoe UI", sans-serif';
+    ctx.font = px(10);
     ctx.fillStyle = C.tickText;
     ctx.fillText('Δ vs today ' + (dq >= 0 ? '+' : '') + dq.toFixed(0),
       w - STRIP_PAD.right - valW - 8, 11);

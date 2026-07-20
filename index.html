@@ -29,28 +29,31 @@
     <button id="sidebarClose" type="button" aria-label="Close about panel">×</button>
     <h2>About this visualization</h2>
     <p>
-      Milankovitch cycles are the slow changes in Earth's orbit and axial tilt
-      that pace the ice ages by varying how much sunlight reaches high northern
-      latitudes in summer. This page animates all three cycles over the past
-      one million years (−1000 to +60 kyr):
+      Milankovitch cycles are quasi-periodic variations in Earth's orbital
+      configuration that modulate the seasonal and latitudinal distribution of
+      insolation, and are widely regarded as the pacemaker of Quaternary
+      glaciation. This page animates the three orbital parameters from
+      −1000 to +60 kyr:
     </p>
     <ul>
-      <li><b>Eccentricity (~100 kyr)</b> — the shape of Earth's orbit around the Sun;</li>
-      <li><b>Obliquity (~41 kyr)</b> — the tilt of Earth's axis, which controls the strength of the seasons;</li>
-      <li><b>Climatic precession (~21 kyr)</b> — the wobble that shifts where on the orbit the seasons fall.</li>
+      <li><b>Eccentricity (e, ~100 kyr)</b> — shape of the orbit;</li>
+      <li><b>Obliquity (ε, ~41 kyr)</b> — axial tilt; controls seasonal contrast;</li>
+      <li><b>Climatic precession (e·sinϖ, ~21 kyr)</b> — timing of the seasons relative to perihelion.</li>
     </ul>
     <p>
-      The left panel shows the orbit viewed from above the north ecliptic pole.
-      The right panel switches between a <b>Precession</b> view (the whole planet
-      wobbling under fixed sunlight) and an <b>NH summer</b> view (the June
-      solstice Sun–Earth distance, with a scrolling 65°N June-insolation
-      strip — the classic ice-age trigger).
+      Left panel: the orbit viewed from above the north ecliptic pole.
+      Right panel: a <b>Precession</b> view (axial precession under fixed
+      illumination) and an <b>NH summer</b> view (June-solstice Sun–Earth
+      distance and daily insolation at 65°N — the quantity central to the
+      Milankovitch hypothesis).
     </p>
     <h2>Data &amp; credits</h2>
     <p>
       Orbital data: Laskar et al. (2004),
       <a href="https://doi.org/10.1051/0004-6361:20041335">doi:10.1051/0004-6361:20041335</a>
-      (La2004 orbital solution).
+      (La2004 orbital solution) — orbital elements and the 65°N June-solstice
+      insolation series computed with the
+      <a href="https://github.com/PaleoIPSL/Insolation">insolation</a> Python package.
     </p>
     <p>
       Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth
