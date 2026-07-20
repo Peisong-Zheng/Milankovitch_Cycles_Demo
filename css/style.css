@@ -470,11 +470,16 @@ body {
 
 @media (max-width: 900px) {
   #stage { flex-direction: column; }
-  #paneOrbit, #paneEarth { flex: 1 1 0; }
+  /* stacked: give the orbit pane more vertical room (3:2) */
+  #paneOrbit { flex: 3 1 0; }
   #paneEarth {
+    flex: 2 1 0;
     border-left: none;
     border-top: 1px solid var(--line);
   }
+  /* the two panels no longer fit side by side: legend moves to the
+     bottom-left corner so neither covers the orbit animation */
+  #legend { top: auto; right: auto; left: 14px; bottom: 14px; }
 }
 
 @media (max-width: 720px) {
@@ -486,7 +491,7 @@ body {
   #hud { top: 10px; left: 10px; min-width: 0; padding: 8px 12px; }
   .hud-time { font-size: 16px; }
   .hud-row { font-size: 11px; }
-  #legend { top: 10px; right: 10px; font-size: 10.5px; padding: 6px 10px; gap: 4px; }
+  #legend { left: 10px; bottom: 10px; font-size: 10.5px; padding: 6px 10px; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; }
   #viewToggle { top: 10px; right: 10px; font-size: 11px; padding: 5px 10px; }
   #controls { gap: 10px; }
