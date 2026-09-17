@@ -21,6 +21,7 @@ const SUN_R = 1.5;
 const EARTH_X = 3.6;      // mean-distance baseline (scene units)
 const EARTH_R = 0.85;
 const SLIDE_MAX = 1.25;   // max horizontal excursion after exaggeration
+const OBL_GAIN = 6;       // visual exaggeration of the obliquity swing (real ±1.2°)
 const CAM_Z = 15;
 const CAM_Y = 1.0;
 const WIN_HALF = 100;     // scrolling strip window: ±100 kyr around now
@@ -67,6 +68,13 @@ export class SummerView {
     this._buildSun();
     this._buildEarth();
 
+    // polar tilt inset (bottom-right): close-up globe whose axis swings in
+    // sync with the main Earth, against a dashed reference at today's tilt
+    this.insetCanvas = document.getElementById('tiltCanvas');
+    this.tiltValEl = document.getElementById('tiltVal');
+    this.tiltDeltaEl = document.getElementById('tiltDelta');
+    if (this.insetCanvas) this._buildInset();
+
     this._lastIdx = -1;
     this._stripDirty = false;
     this._resize = this._resize.bind(this);
@@ -104,6 +112,10 @@ export class SummerView {
     this.qMin = qLo - pad;
     this.qMax = qHi + pad;
     this.q0 = this.qSeries[d.indexAt(0)]; // today, for the Δ readout
+    // mean obliquity (rad): the visible tilt oscillates around this value
+    let oblSum = 0;
+    for (let i = 0; i < n; i++) oblSum += d.obl[i];
+    this.oblMean = oblSum / n;
   }
 
   _buildSun() {
@@ -177,6 +189,60 @@ export class SummerView {
     this.scene.add(this.mover);
   }
 
+  // exaggerated tilt angle shared by the main Earth and the polar inset
+  _tiltZ(obl) {
+    return this.oblMean + (obl - this.oblMean) * OBL_GAIN;
+  }
+
+  // Bottom-right inset: a close-up of the globe (Arctic side) whose axis
+  // swings with the obliquity, against a fixed dashed line at today's tilt
+  _buildInset() {
+    const r = new THREE.WebGLRenderer({ canvas: this.insetCanvas, antialias: true, alpha: true });
+    r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.insetRenderer = r;
+    const scene = (this.insetScene = new THREE.Scene());
+    // tight framing on the Arctic cap: pole centred, axis tips in view
+    this.insetCamera = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+    this.insetCamera.position.set(0, 1.35, 2.2);
+    this.insetCamera.lookAt(0, 0.95, 0);
+
+    const key = new THREE.DirectionalLight(0xfff7e0, 2.8);
+    key.position.set(-4, 1.5, 3);
+    scene.add(key);
+    scene.add(new THREE.HemisphereLight(0x93c5fd, 0x0b1226, 0.25));
+
+    const R = 1;
+    this.insetTilt = new THREE.Group();
+    const mat = new THREE.MeshLambertMaterial({ color: 0x3b82f6 });
+    new THREE.TextureLoader().load('lib/textures/earth_atmos_2048.jpg', (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+      mat.map = t;
+      mat.color.set(0xffffff);
+      mat.needsUpdate = true;
+    });
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(R, 48, 32), mat);
+    globe.rotation.y = -Math.PI / 2; // lon 0 faces the camera, as the main Earth
+    this.insetTilt.add(globe);
+    const axisGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -R * 1.5, 0),
+      new THREE.Vector3(0, R * 1.5, 0),
+    ]);
+    this.insetTilt.add(new THREE.Line(axisGeo, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
+    scene.add(this.insetTilt);
+
+    // fixed reference line: today's obliquity under the same exaggeration
+    const refGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, -R * 1.5, 0),
+      new THREE.Vector3(0, R * 1.5, 0),
+    ]);
+    const ref = new THREE.Line(refGeo, new THREE.LineDashedMaterial({
+      color: 0x94a3b8, dashSize: 0.12, gapSize: 0.08, transparent: true, opacity: 0.9,
+    }));
+    ref.computeLineDistances();
+    ref.rotation.z = this._tiltZ(this.data.obl[this.data.indexAt(0)]);
+    scene.add(ref);
+  }
+
   _resize() {
     const el = this.renderer.domElement.parentElement;
     const w = el.clientWidth;
@@ -204,19 +270,47 @@ export class SummerView {
       this._sui = Math.max(0.72, Math.min(1, cw / 700));
       this._stripDirty = true;
     }
+
+    if (this.insetRenderer) {
+      const iw = this.insetCanvas.clientWidth;
+      const ih = this.insetCanvas.clientHeight;
+      if (iw > 0 && ih > 0) {
+        this.insetRenderer.setSize(iw, ih, false);
+        this.insetCamera.aspect = iw / ih;
+        this.insetCamera.updateProjectionMatrix();
+        this._stripDirty = true; // force inset + gauge refresh
+      }
+    }
   }
 
   update(index) {
-    this.tiltGroup.rotation.z = this.data.obl[index]; // axis top leans sunward
+    // axis top leans sunward by the obliquity; the real ±1.2° swing is
+    // imperceptible, so it is exaggerated around the mean (the polar inset
+    // always shows the true value)
+    const tiltZ = this._tiltZ(this.data.obl[index]);
+    this.tiltGroup.rotation.z = tiltZ;
     this.mover.position.x = EARTH_X + (this.rSeries[index] - this.rMean) * this.gain;
 
     if (index !== this._lastIdx || this._stripDirty) {
       this._drawStrip(index);
+      this._updateInset(index, tiltZ);
       this._stripDirty = false;
       this._lastIdx = index;
     }
 
     this.renderer.render(this.scene, this.camera);
+  }
+
+  // refresh the polar inset: axis swing (exaggerated, in sync with the main
+  // Earth) + true value and Δ-vs-today readouts
+  _updateInset(index, tiltZ) {
+    if (!this.insetRenderer) return;
+    this.insetTilt.rotation.z = tiltZ;
+    const oblDeg = this.data.oblDeg[index];
+    this.tiltValEl.textContent = oblDeg.toFixed(2) + '°';
+    const d0 = oblDeg - this.data.oblDeg[this.data.indexAt(0)];
+    this.tiltDeltaEl.textContent = 'Δ vs today ' + (d0 >= 0 ? '+' : '−') + Math.abs(d0).toFixed(2) + '°';
+    this.insetRenderer.render(this.insetScene, this.insetCamera);
   }
 
   // Scrolling strip: window of ±WIN_HALF kyr around t, clamped to the data

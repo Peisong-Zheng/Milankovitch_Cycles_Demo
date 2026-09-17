@@ -57,7 +57,8 @@
     </p>
     <p>
       Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth
-      distance exaggerated in the summer view; Earth's orbital phase is schematic.
+      distance and axial-tilt swing (×6) exaggerated in the summer view;
+      Earth's orbital phase is schematic.
     </p>
     <p>
       Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
@@ -86,6 +87,11 @@
         <div id="summerWrap" style="display:none">
           <div id="summerSceneBox">
             <canvas id="summer"></canvas>
+            <div id="tiltInset" class="panel">
+              <div class="tilt-inset-row"><span>Axial tilt ε</span><b id="tiltVal">—</b></div>
+              <canvas id="tiltCanvas"></canvas>
+              <div class="tilt-inset-foot"><span id="tiltDelta">Δ vs today —</span><span class="tilt-key"><i></i>today</span></div>
+            </div>
           </div>
           <canvas id="summerChart"></canvas>
         </div>

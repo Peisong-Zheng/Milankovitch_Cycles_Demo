@@ -268,6 +268,52 @@ body {
   background: rgba(10, 15, 30, 0.55);
 }
 
+/* polar tilt inset (NH summer view, bottom-right) */
+#tiltInset {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 122px;
+  padding: 6px 8px 6px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+#tiltInset .tilt-inset-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+#tiltInset b {
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
+#tiltCanvas {
+  width: 100%;
+  height: 74px;
+  display: block;
+  margin-top: 2px;
+}
+
+.tilt-inset-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  opacity: 0.85;
+}
+
+.tilt-key i {
+  display: inline-block;
+  width: 12px;
+  border-top: 2px dashed #94a3b8;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .hud-time {
   font-size: 22px;
   font-weight: 650;
@@ -504,5 +550,7 @@ body {
   #timeLabel { font-size: 12px; min-width: 78px; }
   .chart { height: clamp(64px, 10vh, 100px); }
   #summerChart { height: 52px; }
+  #tiltInset { width: 104px; right: 8px; bottom: 8px; }
+  #tiltCanvas { height: 62px; }
   #sidebar { font-size: 12px; }
 }
