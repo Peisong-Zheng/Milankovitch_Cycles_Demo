@@ -110,6 +110,7 @@ async function boot() {
     $('solsticeWrap').style.display = isOrbit ? 'none' : '';
     $('hud').style.display = isOrbit ? '' : 'none';
     $('legend').style.display = isOrbit ? '' : 'none';
+    $('eccNote').style.display = isOrbit ? '' : 'none';
     orbitToggle.textContent = isOrbit ? 'View: Orbit' : 'View: Solstice drift';
     orbitToggle.title = isOrbit
       ? 'Full orbit scene — click for the solstice-drift view'

@@ -471,6 +471,26 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* small corner note marking an exaggerated quantity in a view */
+.pane-note {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  font-size: 10.5px;
+  color: var(--text-dim);
+  opacity: 0.85;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* top-left variant (NH summer view, where bottom corners are taken) */
+.pane-note-tl {
+  right: auto;
+  bottom: auto;
+  left: 12px;
+  top: 10px;
+}
+
 .pane-toggle {
   position: absolute;
   top: 14px;
