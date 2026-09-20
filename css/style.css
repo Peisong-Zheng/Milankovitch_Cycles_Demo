@@ -182,7 +182,10 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-width: 1500px;
+  /* scale with the viewport so large displays (4K) aren't left with a
+     narrow fixed column; 1500px floor keeps smaller windows unchanged and
+     2560px caps ultra-wide monitors from stretching too far */
+  max-width: clamp(1500px, 90vw, 2560px);
   width: 100%;
   margin: 0 auto;
   padding: 10px 16px 0;
