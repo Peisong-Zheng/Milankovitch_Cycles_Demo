@@ -15,7 +15,6 @@ import { ellipsePoint, makeGlowTexture, makeStars } from './scene.js';
 import { APSIDAL_SHARE, AXIAL_SHARE, solsticeAnomaly } from './insolation.js';
 
 const ELLIPSE_SEGS = 256;
-const TRAIL_LEN = 240;   // ≈24 kyr of solstice-point history at DT = 0.1 kyr
 const ECC_GAIN = 3;      // same visual exaggeration as the orbit view
 const TWO_PI = Math.PI * 2;
 
@@ -43,7 +42,6 @@ export class SolsticeView {
     this._buildSun();
     this._buildOrbitLine();
     this._buildEarth();
-    this._buildTrail();
 
     // amber dot: perihelion
     this.periDot = new THREE.Mesh(
@@ -105,7 +103,7 @@ export class SolsticeView {
     atm.scale.set(2.3, 2.3, 1);
     this.earthGroup.add(atm);
 
-    // axis + equator ring (rotation order YXZ, as in the orbit view)
+    // axis (rotation order YXZ, as in the orbit view)
     this.axisGroup = new THREE.Group();
     this.axisGroup.rotation.order = 'YXZ';
     const axisGeo = new THREE.BufferGeometry().setFromPoints([
@@ -113,39 +111,8 @@ export class SolsticeView {
       new THREE.Vector3(0, 2.0, 0),
     ]);
     this.axisGroup.add(new THREE.Line(axisGeo, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
-    const ringPts = [];
-    for (let i = 0; i < 64; i++) {
-      const a = (i / 64) * TWO_PI;
-      ringPts.push(new THREE.Vector3(Math.cos(a) * 0.74, 0, Math.sin(a) * 0.74));
-    }
-    const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPts);
-    this.axisGroup.add(new THREE.LineLoop(ringGeo, new THREE.LineBasicMaterial({
-      color: 0x93c5fd, transparent: true, opacity: 0.6,
-    })));
     this.earthGroup.add(this.axisGroup);
     this.scene.add(this.earthGroup);
-  }
-
-  // trail of past solstice points (θ_sol history), reprojected onto the
-  // CURRENT ellipse every render — same approach as the orbit view's trail
-  _buildTrail() {
-    this.trailVals = new Float32Array(TRAIL_LEN);
-    this.trailVals.fill(solsticeAnomaly(this.data.pi[0]));
-    this.trailPos = new Float32Array(TRAIL_LEN * 3);
-    const trailColors = new Float32Array(TRAIL_LEN * 3);
-    for (let i = 0; i < TRAIL_LEN; i++) {
-      const f = (i / (TRAIL_LEN - 1)) ** 2;
-      trailColors[i * 3] = 0.14 + 0.82 * f;     // R (amber fade)
-      trailColors[i * 3 + 1] = 0.08 + 0.57 * f; // G
-      trailColors[i * 3 + 2] = 0.02 + 0.09 * f; // B
-    }
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(this.trailPos, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(trailColors, 3));
-    this.trail = new THREE.Line(geo, new THREE.LineBasicMaterial({
-      vertexColors: true, transparent: true, opacity: 0.95, depthWrite: false,
-    }));
-    this.scene.add(this.trail);
   }
 
   _resize() {
@@ -159,12 +126,6 @@ export class SolsticeView {
     this._dirty = true;
   }
 
-  // after a slider scrub, collapse the trail onto the current solstice point
-  resetTrail(index) {
-    this.trailVals.fill(solsticeAnomaly(this.data.pi[index]));
-    this._dirty = true;
-  }
-
   // renders only when the data row changed or a resize dirtied the frame
   // (paused = frozen; the camera is fixed)
   update(index) {
@@ -172,10 +133,6 @@ export class SolsticeView {
 
     const pi = this.data.pi[index];
     const thSol = solsticeAnomaly(pi);
-    if (index !== this._lastIdx) {
-      this.trailVals.copyWithin(0, 1);
-      this.trailVals[TRAIL_LEN - 1] = thSol;
-    }
 
     const e = Math.min(this.data.ecc[index] * ECC_GAIN, 0.9);
     const dw = pi - this.pi0;
@@ -199,14 +156,6 @@ export class SolsticeView {
 
     ellipsePoint(0, e, w, p); // perihelion
     this.periDot.position.copy(p);
-
-    for (let i = 0; i < TRAIL_LEN; i++) {
-      ellipsePoint(this.trailVals[i], e, w, p);
-      this.trailPos[i * 3] = p.x;
-      this.trailPos[i * 3 + 1] = p.y;
-      this.trailPos[i * 3 + 2] = p.z;
-    }
-    this.trail.geometry.attributes.position.needsUpdate = true;
 
     if (this.hudEl) {
       const deg = (((thSol * 180 / Math.PI) % 360) + 360) % 360;

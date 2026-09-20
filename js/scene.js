@@ -152,7 +152,7 @@ export class OrbitScene {
     atm.scale.set(2.3, 2.3, 1);
     this.earthGroup.add(atm);
 
-    // Axis + equator ring inside axisGroup; rotation order YXZ:
+    // Axis inside axisGroup; rotation order YXZ:
     // first tilt by obliquity from the orbit normal, then swing azimuth (precession).
     // Axis line is deliberately long so the tilt reads at orbit scale.
     this.axisGroup = new THREE.Group();
@@ -162,16 +162,6 @@ export class OrbitScene {
       new THREE.Vector3(0, 2.0, 0),
     ]);
     this.axisGroup.add(new THREE.Line(axisGeo, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
-
-    const ringPts = [];
-    for (let i = 0; i < 64; i++) {
-      const a = (i / 64) * TWO_PI;
-      ringPts.push(new THREE.Vector3(Math.cos(a) * 0.74, 0, Math.sin(a) * 0.74));
-    }
-    const ringGeo = new THREE.BufferGeometry().setFromPoints(ringPts);
-    this.axisGroup.add(new THREE.LineLoop(ringGeo, new THREE.LineBasicMaterial({
-      color: 0x93c5fd, transparent: true, opacity: 0.6,
-    })));
     this.earthGroup.add(this.axisGroup);
 
     this.scene.add(this.earthGroup);

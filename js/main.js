@@ -71,7 +71,6 @@ async function boot() {
   slider.addEventListener('input', () => {
     player.seek(parseFloat(slider.value));
     scene.resetTrail(anomaly);
-    solstice.resetTrail(data.indexAt(player.t));
     syncPlayBtn();
   });
   playBtn.addEventListener('click', () => {
@@ -117,10 +116,7 @@ async function boot() {
       : 'June-solstice drift along the orbit — click for the orbit view';
     // canvases were 0-sized while hidden; force a resize on the incoming view
     if (isOrbit) scene._resize();
-    else {
-      solstice._resize();
-      solstice.resetTrail(data.indexAt(player.t));
-    }
+    else solstice._resize();
   }
   orbitToggle.addEventListener('click', () =>
     setOrbitView(activeOrbitView === 'orbit' ? 'solstice' : 'orbit'));
