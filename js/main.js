@@ -115,8 +115,12 @@ async function boot() {
       ? 'Full orbit scene — click for the solstice-drift view'
       : 'June-solstice drift along the orbit — click for the orbit view';
     // canvases were 0-sized while hidden; force a resize on the incoming view
-    if (isOrbit) scene._resize();
-    else solstice._resize();
+    if (isOrbit) {
+      scene._resize();
+      // the year-phase clock kept advancing while the solstice panel was shown,
+      // so the orbit trail's history is stale — collapse it (same as a scrub)
+      scene.resetTrail(anomaly);
+    } else solstice._resize();
   }
   orbitToggle.addEventListener('click', () =>
     setOrbitView(activeOrbitView === 'orbit' ? 'solstice' : 'orbit'));
