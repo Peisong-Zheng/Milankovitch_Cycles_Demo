@@ -358,10 +358,13 @@ body {
   letter-spacing: 0.5px;
 }
 
-#legend {
+/* amber-dot legend: orbit view (left pane) and NH summer view (bottom-left
+   of the scene box, next to the polar inset on the right) */
+#legend,
+#summerLegend {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  left: 14px;
+  bottom: 14px;
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
@@ -386,12 +389,89 @@ body {
   box-shadow: 0 0 6px rgba(251, 191, 36, 0.7);
 }
 
-.legend-june {
-  background: #fb7185;
-  box-shadow: 0 0 6px rgba(251, 113, 133, 0.7);
+/* floating labels that track a 3D body (e·sinϖ trend above the Earth in the
+   NH summer view) */
+.float-label {
+  position: absolute;
+  transform: translate(-50%, -135%);
+  padding: 4px 9px;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--text-dim);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
 }
 
-#viewToggle {
+#precTrend { color: var(--text); }
+#precTrend .up { color: var(--amber); }
+#precTrend .down { color: var(--accent); }
+
+/* ---------- left pane, second view: Solstice drift (scrollable panel) ---------- */
+
+#solsticeWrap {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  padding: 48px 18px 22px; /* top clearance for the toggle button */
+  background: radial-gradient(ellipse at 50% 30%, #0d1730 0%, #080f22 60%, #05070f 100%);
+}
+
+#solsticeWrap figure {
+  margin: 0 0 20px;
+}
+
+#solsticeWrap .diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(5, 7, 15, 0.35);
+}
+
+#solsticeWrap figcaption,
+#solsticeWrap .solstice-cap {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+
+#solsticeWrap figcaption b,
+#solsticeWrap .solstice-cap b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+#solsticeAnimBox {
+  position: relative;
+  height: 56vh;
+  min-height: 320px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#solsticeAnim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#solsticeHud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.pane-toggle {
   position: absolute;
   top: 14px;
   right: 14px;
@@ -404,9 +484,10 @@ body {
   cursor: pointer;
   backdrop-filter: blur(6px);
   transition: color 0.15s, border-color 0.15s;
+  z-index: 2;
 }
 
-#viewToggle:hover {
+.pane-toggle:hover {
   color: var(--text);
   border-color: rgba(251, 191, 36, 0.5);
 }
@@ -528,9 +609,6 @@ body {
     border-left: none;
     border-top: 1px solid var(--line);
   }
-  /* the two panels no longer fit side by side: legend moves to the
-     bottom-left corner so neither covers the orbit animation */
-  #legend { top: auto; right: auto; left: 14px; bottom: 14px; }
 }
 
 @media (max-width: 720px) {
@@ -542,9 +620,9 @@ body {
   #hud { top: 10px; left: 10px; min-width: 0; padding: 7px 10px; }
   .hud-time { font-size: 16px; }
   .hud-row { font-size: 11px; line-height: 1.55; }
-  #legend { left: 10px; bottom: 10px; font-size: 10.5px; padding: 6px 10px; gap: 4px; }
+  #legend, #summerLegend { left: 10px; bottom: 10px; font-size: 10.5px; padding: 6px 10px; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; }
-  #viewToggle { top: 10px; right: 10px; font-size: 11px; padding: 5px 10px; }
+  .pane-toggle { top: 10px; right: 10px; font-size: 11px; padding: 5px 10px; }
   #controls { gap: 10px; }
   #playBtn { width: 34px; height: 34px; font-size: 14px; }
   #timeLabel { font-size: 12px; min-width: 78px; }

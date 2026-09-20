@@ -7,7 +7,12 @@
 // with eccentricity (amplitude envelope, ~100 kyr) and climatic precession
 // (phase, ~21 kyr). The deviation from the data-span mean is amplified by a
 // self-calibrating gain — the real range is only a few % of 1 AU (footer
-// carries the exaggeration note).
+// carries the exaggeration note). A floating label above the Earth shows
+// e·sinϖ and its rising/falling trend.
+// Overlaid in 3D: the orbit seen edge-on (perpendicular to the screen — the
+// view looks along the orbital tangent), passing through the Earth with the
+// Sun at its focus; the amber perihelion marker rides it and periodically
+// passes through the Earth (~21 kyr climatic-precession cycle).
 // A narrow strip at the bottom scrolls the full 65°N June-insolation series
 // through a ±100 kyr window centered on "now".
 
@@ -25,6 +30,7 @@ const OBL_GAIN = 6;       // visual exaggeration of the obliquity swing (real ±
 const CAM_Z = 15;
 const CAM_Y = 1.0;
 const WIN_HALF = 100;     // scrolling strip window: ±100 kyr around now
+const ORBIT_SEGS = 128;   // segments of the edge-on orbit overlay
 const TWO_PI = Math.PI * 2;
 
 const STRIP_PAD = { left: 44, right: 12, top: 15, bottom: 13 };
@@ -42,6 +48,9 @@ export class SummerView {
     this.data = data;
     this.chart = chartCanvas;
     this.sctx = chartCanvas.getContext('2d');
+    this.trendEl = document.getElementById('precTrend'); // floating e·sinϖ trend label
+    this._trendIdx = -1;
+    this._v3 = new THREE.Vector3();
 
     this._precompute();
 
@@ -67,6 +76,7 @@ export class SummerView {
 
     this._buildSun();
     this._buildEarth();
+    this._buildOrbitOverlay();
 
     // polar tilt inset (bottom-right): close-up globe whose axis swings in
     // sync with the main Earth, against a dashed reference at today's tilt
@@ -116,6 +126,13 @@ export class SummerView {
     let oblSum = 0;
     for (let i = 0; i < n; i++) oblSum += d.obl[i];
     this.oblMean = oblSum / n;
+    // sign of d(e·sinϖ)/dt per row (central difference; the series is smooth)
+    this.preRising = new Int8Array(n);
+    for (let i = 0; i < n; i++) {
+      const dm = d.pre[i] - d.pre[Math.max(0, i - 1)];
+      const dp = d.pre[Math.min(n - 1, i + 1)] - d.pre[i];
+      this.preRising[i] = (dp + dm) >= 0 ? 1 : -1;
+    }
   }
 
   _buildSun() {
@@ -187,6 +204,84 @@ export class SummerView {
     this.mover.add(atm);
 
     this.scene.add(this.mover);
+  }
+
+  // Edge-on orbit overlay: the ecliptic plane is perpendicular to the screen
+  // (the view looks along the orbital tangent at the solstice point). The
+  // ellipse keeps the Sun as its focus and always passes through the
+  // displayed Earth; as climatic precession cycles, it pivots around the Sun
+  // and the amber perihelion marker periodically passes through the Earth
+  // (θ_sol ≡ 0, i.e. June solstice at perihelion).
+  _buildOrbitOverlay() {
+    this.overlayPos = new Float32Array(ORBIT_SEGS * 3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(this.overlayPos, 3));
+    this.overlayLine = new THREE.LineLoop(geo, new THREE.LineBasicMaterial({
+      color: 0x38bdf8, transparent: true, opacity: 0.3, depthWrite: false,
+    }));
+    this.scene.add(this.overlayLine);
+
+    this.periMarker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.1, 16, 8),
+      new THREE.MeshBasicMaterial({ color: 0xf59e0b })
+    );
+    this.scene.add(this.periMarker);
+    const periGlowTex = makeGlowTexture([
+      [0, 'rgba(245, 158, 11, 0.8)'],
+      [0.4, 'rgba(245, 158, 11, 0.25)'],
+      [1, 'rgba(245, 158, 11, 0)'],
+    ]);
+    this.periGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: periGlowTex, transparent: true, depthWrite: false,
+    }));
+    this.periGlow.scale.set(0.55, 0.55, 1);
+    this.scene.add(this.periGlow);
+  }
+
+  // Rebuild the overlay for data row `index`: with D the displayed Sun–Earth
+  // distance, a = D(1+e·cosθ_sol)/(1−e²) puts the ellipse exactly through the
+  // Earth; a point at true anomaly θ sits at azimuth ψ = θ−θ_sol in the x–z
+  // plane, position (SUN_X + r·cosψ, 0, −r·sinψ) — same azimuth convention as
+  // the orbit view (CCW seen from ecliptic north).
+  _updateOrbitOverlay(index) {
+    const e = this.data.ecc[index];
+    const thSol = solsticeAnomaly(this.data.pi[index]);
+    const D = this.mover.position.x - SUN_X;
+    const a = D * (1 + e * Math.cos(thSol)) / (1 - e * e);
+    const rN = a * (1 - e * e);
+    for (let j = 0; j < ORBIT_SEGS; j++) {
+      const th = (j / ORBIT_SEGS) * TWO_PI;
+      const r = rN / (1 + e * Math.cos(th));
+      const psi = th - thSol;
+      this.overlayPos[j * 3] = SUN_X + r * Math.cos(psi);
+      this.overlayPos[j * 3 + 1] = 0;
+      this.overlayPos[j * 3 + 2] = -r * Math.sin(psi);
+    }
+    this.overlayLine.geometry.attributes.position.needsUpdate = true;
+
+    // perihelion (θ = 0 → ψ = −θ_sol); coincides with the Earth when θ_sol ≡ 0
+    const rp = a * (1 - e);
+    const px = SUN_X + rp * Math.cos(thSol);
+    const pz = rp * Math.sin(thSol);
+    this.periMarker.position.set(px, 0, pz);
+    this.periGlow.position.set(px, 0, pz);
+  }
+
+  // floating label above the Earth: e·sinϖ value + rising/falling trend arrow
+  _updateTrend(index) {
+    if (!this.trendEl) return;
+    this._v3.set(this.mover.position.x, EARTH_R * 2.1, 0).project(this.camera);
+    const el = this.renderer.domElement;
+    this.trendEl.style.left = ((this._v3.x * 0.5 + 0.5) * el.clientWidth).toFixed(1) + 'px';
+    this.trendEl.style.top = ((-this._v3.y * 0.5 + 0.5) * el.clientHeight).toFixed(1) + 'px';
+    if (index !== this._trendIdx) {
+      this._trendIdx = index;
+      const pre = this.data.pre[index];
+      const up = this.preRising[index] > 0;
+      this.trendEl.innerHTML =
+        `e·sinϖ ${pre >= 0 ? '+' : '−'}${Math.abs(pre).toFixed(4)} ` +
+        `<b class="${up ? 'up' : 'down'}">${up ? '▲ rising' : '▼ falling'}</b>`;
+    }
   }
 
   // exaggerated tilt angle shared by the main Earth and the polar inset
@@ -290,6 +385,9 @@ export class SummerView {
     const tiltZ = this._tiltZ(this.data.obl[index]);
     this.tiltGroup.rotation.z = tiltZ;
     this.mover.position.x = EARTH_X + (this.rSeries[index] - this.rMean) * this.gain;
+
+    this._updateOrbitOverlay(index);
+    this._updateTrend(index);
 
     if (index !== this._lastIdx || this._stripDirty) {
       this._drawStrip(index);

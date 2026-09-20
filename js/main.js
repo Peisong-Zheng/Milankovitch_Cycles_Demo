@@ -4,6 +4,7 @@ import { loadOrbitalData } from './data.js';
 import { OrbitScene } from './scene.js';
 import { EarthView } from './earthview.js';
 import { SummerView } from './summerview.js';
+import { SolsticeView, drawSolsticeDiagram } from './solsticeview.js';
 import { TimeChart } from './charts.js';
 import { Player } from './player.js';
 import { solsticeAnomaly } from './insolation.js';
@@ -24,6 +25,8 @@ async function boot() {
   const scene = new OrbitScene($('scene'), data);
   const earth = new EarthView($('earth'), data);   // precession view
   const summer = new SummerView($('summer'), $('summerChart'), data);
+  const solstice = new SolsticeView($('solsticeAnim'), data); // solstice-drift view
+  drawSolsticeDiagram($('diagram1'));
 
   const charts = [
     new TimeChart($('chartEcc'), {
@@ -68,6 +71,7 @@ async function boot() {
   slider.addEventListener('input', () => {
     player.seek(parseFloat(slider.value));
     scene.resetTrail(anomaly);
+    solstice.resetTrail(data.indexAt(player.t));
     syncPlayBtn();
   });
   playBtn.addEventListener('click', () => {
@@ -95,6 +99,32 @@ async function boot() {
   viewToggle.addEventListener('click', () =>
     setView(activeView === 'precession' ? 'summer' : 'precession'));
   setView(new URLSearchParams(location.search).get('view') === 'summer' ? 'summer' : 'precession');
+
+  // left pane view switch: ORBIT (full scene) vs SOLSTICE DRIFT (didactic
+  // scroll panel); the HUD and legend belong to the orbit view
+  const orbitToggle = $('orbitViewToggle');
+  let activeOrbitView = 'orbit';
+  function setOrbitView(name) {
+    activeOrbitView = name;
+    const isOrbit = name === 'orbit';
+    $('scene').style.display = isOrbit ? '' : 'none';
+    $('solsticeWrap').style.display = isOrbit ? 'none' : '';
+    $('hud').style.display = isOrbit ? '' : 'none';
+    $('legend').style.display = isOrbit ? '' : 'none';
+    orbitToggle.textContent = isOrbit ? 'View: Orbit' : 'View: Solstice drift';
+    orbitToggle.title = isOrbit
+      ? 'Full orbit scene — click for the solstice-drift view'
+      : 'June-solstice drift along the orbit — click for the orbit view';
+    // canvases were 0-sized while hidden; force a resize on the incoming view
+    if (isOrbit) scene._resize();
+    else {
+      solstice._resize();
+      solstice.resetTrail(data.indexAt(player.t));
+    }
+  }
+  orbitToggle.addEventListener('click', () =>
+    setOrbitView(activeOrbitView === 'orbit' ? 'solstice' : 'orbit'));
+  setOrbitView('orbit');
 
   // about sidebar: hamburger / close button / overlay / Esc
   const sidebar = $('sidebar');
@@ -128,7 +158,8 @@ async function boot() {
     if (player.playing) anomaly = (anomaly + (dt * TWO_PI) / REV_SECONDS) % TWO_PI;
     const idx = data.indexAt(player.t);
 
-    scene.update(idx, anomaly, dt, player.playing);
+    if (activeOrbitView === 'orbit') scene.update(idx, anomaly, dt, player.playing);
+    else solstice.update(idx);
     if (activeView === 'precession') earth.update(idx);
     else summer.update(idx);
 
@@ -165,7 +196,7 @@ async function boot() {
   requestAnimationFrame(frame);
 
   // debug / test handle
-  window.__app = { player, scene, earth, summer, data };
+  window.__app = { player, scene, earth, summer, solstice, data };
 }
 
 boot().catch((err) => {

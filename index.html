@@ -41,11 +41,17 @@
       <li><b>Climatic precession (e·sinϖ, ~21 kyr)</b> — timing of the seasons relative to perihelion.</li>
     </ul>
     <p>
-      Left panel: the orbit viewed from above the north ecliptic pole.
-      Right panel: a <b>Precession</b> view (axial precession under fixed
-      illumination) and an <b>NH summer</b> view (June-solstice Sun–Earth
-      distance and daily insolation at 65°N — the quantity central to the
-      Milankovitch hypothesis).
+      Each pane offers two views of how the orbital parameters modulate
+      seasonal insolation. Left pane: <b>Orbit</b> (the full geometry from
+      above the north ecliptic pole — the ellipse deforms with eccentricity,
+      the perihelion advances, the axis precesses) and <b>Solstice drift</b>
+      (two static schematics plus a live animation with the Earth locked at
+      the June solstice — watch climatic precession drag the season along the
+      orbit relative to perihelion). Right pane: <b>Precession</b> (axial
+      precession under fixed illumination) and <b>NH summer</b> (June-solstice
+      Sun–Earth distance and daily insolation at 65°N — the quantity central
+      to the Milankovitch hypothesis — with the orbit overlaid edge-on: the
+      amber perihelion marker periodically passes through the Earth).
     </p>
     <h2>Data &amp; credits</h2>
     <p>
@@ -56,9 +62,19 @@
       <a href="https://github.com/PaleoIPSL/Insolation">insolation</a> Python package.
     </p>
     <p>
+      The solstice-drift schematic (left pane, second view) follows the
+      geometry of Berger, A. (1978),
+      “Long-term variations of daily insolation and Quaternary climatic changes”,
+      <i>Journal of the Atmospheric Sciences</i>, 35(12), 2362–2367,
+      <a href="https://doi.org/10.1175/1520-0469(1978)035&lt;2362:LTVODI&gt;2.0.CO;2">doi:10.1175/1520-0469(1978)035&lt;2362:LTVODI&gt;2.0.CO;2</a>;
+      the insolation series itself is computed from the La2004 orbital solution
+      with the insolation package above.
+    </p>
+    <p>
       Note: eccentricity exaggerated ×3 in the orbit view; NH-summer Sun–Earth
-      distance and axial-tilt swing (×6) exaggerated in the summer view;
-      Earth's orbital phase is schematic.
+      distance and axial-tilt swing (×6) exaggerated in the summer view; the
+      solstice-drift schematic uses an exaggerated eccentricity; Earth's
+      orbital phase is schematic.
     </p>
     <p>
       Designed by Mr. Peisong Zheng (<a href="mailto:pz285@cam.ac.uk">pz285@cam.ac.uk</a>) ·
@@ -79,7 +95,23 @@
         </div>
         <div id="legend" class="panel">
           <div class="legend-row"><span class="legend-dot"></span>Perihelion (closest to Sun)</div>
-          <div class="legend-row"><span class="legend-dot legend-june"></span>NH June solstice (drifts with precession)</div>
+        </div>
+        <button id="orbitViewToggle" class="pane-toggle" type="button">View: Orbit</button>
+        <div id="solsticeWrap" style="display:none">
+          <figure>
+            <canvas id="diagram1" class="diagram"></canvas>
+            <figcaption><b>June-solstice geometry, schematic after Berger (1978)</b> —
+              eccentricity exaggerated. The north end of the axis points at the Sun; as the
+              axis tip circles backward (retrograde axial precession, ~25.7 kyr), the June
+              solstice point drifts backward along the orbit (ghost = a few millennia from
+              now). ϖ is the longitude of perihelion, measured from the vernal equinox γ.</figcaption>
+          </figure>
+          <div id="solsticeAnimBox">
+            <canvas id="solsticeAnim"></canvas>
+            <div id="solsticeHud" class="panel">June solstice: —</div>
+          </div>
+          <p class="solstice-cap"><b>Live:</b> the Earth locked at the June solstice — axis
+            always pointing at the Sun. Amber dot: perihelion.</p>
         </div>
       </div>
       <div id="paneEarth">
@@ -92,10 +124,14 @@
               <canvas id="tiltCanvas"></canvas>
               <div class="tilt-inset-foot"><span id="tiltDelta">Δ vs today —</span><span class="tilt-key"><i></i>today</span></div>
             </div>
+            <div id="precTrend" class="panel float-label"></div>
+            <div id="summerLegend" class="panel">
+              <div class="legend-row"><span class="legend-dot"></span>Perihelion (closest to Sun)</div>
+            </div>
           </div>
           <canvas id="summerChart"></canvas>
         </div>
-        <button id="viewToggle" type="button">View: Precession</button>
+        <button id="viewToggle" class="pane-toggle" type="button">View: Precession</button>
       </div>
       <div id="loading" class="panel">Loading data…</div>
     </section>

@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from '../lib/OrbitControls.js';
-import { APSIDAL_SHARE, AXIAL_SHARE, solsticeAnomaly } from './insolation.js';
+import { APSIDAL_SHARE, AXIAL_SHARE } from './insolation.js';
 
 const SEMI_MAJOR = 10;     // orbit semi-major axis (scene units)
 const ELLIPSE_SEGS = 256;
@@ -51,7 +51,7 @@ export function makeStars(count, radius, size = 1.6) {
 //   w and the axis azimuth signs below are chosen together with this mirror so
 //   that apsidal precession is prograde, axial precession retrograde, and the
 //   NH June solstice (axis pointing at the Sun) falls at θ = 270° − ϖ.
-function ellipsePoint(θ, e, w, out) {
+export function ellipsePoint(θ, e, w, out) {
   const r = (SEMI_MAJOR * (1 - e * e)) / (1 + e * Math.cos(θ));
   const x0 = r * Math.cos(θ);
   const z0 = -r * Math.sin(θ);
@@ -89,7 +89,7 @@ export class OrbitScene {
     this._buildSun();
     this._buildOrbitLine();
     this._buildEarth();
-    this._buildPerihelionMarker();
+    this._buildMarkers();
 
     this._resize = this._resize.bind(this);
     this._ro = new ResizeObserver(this._resize);
@@ -198,21 +198,13 @@ export class OrbitScene {
     this.scene.add(this.trail);
   }
 
-  _buildPerihelionMarker() {
+  _buildMarkers() {
     // amber dot: perihelion — the point of the orbit closest to the Sun
     this.periDot = new THREE.Mesh(
       new THREE.SphereGeometry(0.24, 16, 8),
       new THREE.MeshBasicMaterial({ color: 0xf59e0b })
     );
     this.scene.add(this.periDot);
-
-    // coral dot: NH June solstice — where northern summer falls on the orbit;
-    // it creeps along the ellipse with climatic precession (~21 kyr cycle)
-    this.juneDot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.24, 16, 8),
-      new THREE.MeshBasicMaterial({ color: 0xfb7185 })
-    );
-    this.scene.add(this.juneDot);
   }
 
   _resize() {
@@ -293,9 +285,6 @@ export class OrbitScene {
 
     ellipsePoint(0, e, w, p); // perihelion
     this.periDot.position.copy(p);
-
-    ellipsePoint(solsticeAnomaly(this.data.pi[index]), e, w, p); // NH June solstice
-    this.juneDot.position.copy(p);
 
     this.controls.update();
     this.renderer.render(this.scene, this.camera);

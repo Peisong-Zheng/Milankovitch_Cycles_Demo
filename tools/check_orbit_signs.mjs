@@ -1,11 +1,13 @@
 // 轨道视图符号约定自检（非浏览器代码，node 直接运行）
 //
-// 锁定 js/scene.js 与 js/earthview.js 的四个约定（2026-07 修复"镜像太阳系"问题）：
+// 锁定 js/scene.js 与 js/earthview.js 的约定（2026-07 修复"镜像太阳系"问题）：
 //   1. 公转：从北极上空（相机侧）看为逆时针 CCW（顺行）
 //   2. 拱线进动：近日点沿轨道 CCW（顺行，与公转同向）
 //   3. 赤道进动：地轴方位 CW（逆行，与公转反向）
 //   4. 夏至约束：北半球夏至（地轴倒向太阳）落在真近点角 θ = 270° − ϖ
 //      （与右屏 "NH summer solstice" 读数一致）
+//   5. 跨屏同步；6. 夏季距离（见下文注释）
+//   7. 夏季视图 edge-on 叠加几何：椭圆过显示地球、θ_sol=0 时近日点与地球重合
 //
 // 约定内容：ellipsePoint 的 z0 取负号（镜像椭圆）、w = pi0 + APSIDAL_SHARE·Δϖ、
 // 地轴方位 α_ax = π − AXIAL_SHARE·Δϖ、右屏 γ = −AXIAL_SHARE·Δϖ。
@@ -135,4 +137,38 @@ function fail(msg) { throw new Error(msg); }
   }
 }
 
-console.log('OK: 轨道符号约定全部成立（公转CCW / 拱线顺行 / 赤道逆行 / 夏至位置 / 跨屏同步 / 夏季距离）');
+// 7. 夏季视图 edge-on 叠加几何（summerview.js 同源公式）：
+//    a = D(1+e·cosθ_sol)/(1−e²) ⇒ 叠加椭圆精确过显示地球（r(θ_sol) = D）；
+//    θ_sol ≡ 0 时近日点标记与地球重合（"近日点周期性穿过地球"）
+{
+  const D = 7.2; // 任意显示距离（SUN_X→EARTH_X）
+  for (const t of [-998.4, -700, -500, -250, -100, 0]) {
+    const idx = data.indexAt(t);
+    const e = data.ecc[idx];
+    const thS = solsticeAnomaly(data.pi[idx]);
+    const a = D * (1 + e * Math.cos(thS)) / (1 - e * e);
+    const rSol = a * (1 - e * e) / (1 + e * Math.cos(thS));
+    if (Math.abs(rSol - D) > 1e-12) fail(`叠加椭圆不过显示地球 @t=${t}: r=${rSol} D=${D}`);
+  }
+  // 合成情形 θ_sol = 0（夏至逢近日点）：近日点标记必须落在地球显示位置
+  {
+    const e = 0.03, thS = 0;
+    const a = D * (1 + e * Math.cos(thS)) / (1 - e * e);
+    const rp = a * (1 - e);
+    const px = rp * Math.cos(thS), pz = rp * Math.sin(thS);
+    if (Math.abs(px - D) > 1e-12 || Math.abs(pz) > 1e-12) {
+      fail(`θ_sol=0 时近日点未与地球重合: (${px}, ${pz}) ≠ (${D}, 0)`);
+    }
+  }
+  // 数据内确实存在 θ_sol ≈ 0 的时刻（ϖ 穿越 270°），动画中可见"穿过"
+  let minAbs = Infinity;
+  for (let i = 0; i < data.n; i++) {
+    const d = Math.abs(wrapPi(solsticeAnomaly(data.pi[i])));
+    if (d < minAbs) minAbs = d;
+  }
+  console.log('叠加几何: 椭圆过显示地球（6 个采样）；θ_sol=0 近日点重合；数据内 min|θ_sol| =',
+    (minAbs * DEG).toFixed(3), '°');
+  if (minAbs > 1.5 * Math.PI / 180) fail('数据范围内 θ_sol 从未接近 0，"近日点穿过地球"不可见');
+}
+
+console.log('OK: 轨道符号约定全部成立（公转CCW / 拱线顺行 / 赤道逆行 / 夏至位置 / 跨屏同步 / 夏季距离 / 夏季叠加几何）');
