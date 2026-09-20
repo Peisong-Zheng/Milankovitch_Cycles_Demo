@@ -563,9 +563,13 @@ function drawEarth(ctx, lam, alpha, withArrow, cone = true) {
 }
 
 function drawDiagram(canvas) {
-  canvas.width = DW;
-  canvas.height = DH;
+  // Render the 1200×860 logical drawing at a multiple of its resolution so
+  // it stays crisp when CSS scales it up on high-DPI (e.g. 4K) displays.
+  const scale = Math.max(window.devicePixelRatio || 1, 2);
+  canvas.width = DW * scale;
+  canvas.height = DH * scale;
   const ctx = canvas.getContext('2d');
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   centerScene();
 
   drawOrbitPlane(ctx);
